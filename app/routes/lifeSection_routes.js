@@ -1,21 +1,17 @@
 const express = require('express')
-
 const passport = require('passport')
+
+const customErrors = require('../lib/custom_errors')
+const handle404 = customErrors.handle404
+const requireOwnership = customErrors.requireOwnership
+const removeBlanks = require('../../lib/remove_blank_fields')
+const requireToken = passport.authenticate('bearer', { session: false })
 
 const LifeSection = require('../models/lifeSection')
 
-const customErrors = require('../lib/custom_errors')
-
-const handle404 = customErrors.handle404
-
-const requireOwnership = customErrors.requireOwnership
-
-const removeBlanks = require('../../lib/remove_blank_fields')
-
-const requireToken = passport.authenticate('bearer', { session: false })
-
 const router = express.Router()
 
+// GET request for all life sections
 router.get('/lifeSections', requireToken, (req, res, next) => {
   LifeSection.find()
     .then(lifeSections => {
@@ -25,27 +21,34 @@ router.get('/lifeSections', requireToken, (req, res, next) => {
     .catch(next)
 })
 
-router.get('/lifeSections/:id', requireToken, (req, res, next) => {
-  LifeSection.findById(req.params.id)
+// GET request for one life section
+router.get('/lifeSections/:lifeSectionId', requireToken, (req, res, next) => {
+  const lifeSectionId = req.params.lifeSectionId
+
+  LifeSection.findById(lifeSectionId)
     .then(handle404)
     .then(lifeSection => res.status(200).json({ lifeSection: lifeSection.toObject() }))
     .catch(next)
 })
 
+// POST request for new life section
 router.post('/lifeSections', requireToken, (req, res, next) => {
   req.body.lifeSection.owner = req.user.id
+  const lifeSectionData = req.body.lifeSection
 
-  LifeSection.create(req.body.lifeSection)
+  LifeSection.create(lifeSectionData)
     .then(lifeSection => {
       res.status(201).json({ lifeSection: lifeSection.toObject() })
     })
     .catch(next)
 })
 
-router.patch('/lifeSections/:id', requireToken, removeBlanks, (req, res, next) => {
+// PATCH request for one life section
+router.patch('/lifeSections/:lifeSectionId', requireToken, removeBlanks, (req, res, next) => {
   delete req.body.lifeSection.owner
+  const lifeSectionId = req.params.lifeSectionId
 
-  LifeSection.findById(req.params.id)
+  LifeSection.findById(lifeSectionId)
     .then(handle404)
     .then(lifeSection => {
       requireOwnership(req, lifeSection)
@@ -55,8 +58,11 @@ router.patch('/lifeSections/:id', requireToken, removeBlanks, (req, res, next) =
     .catch(next)
 })
 
-router.delete('/lifeSections/:id', requireToken, (req, res, next) => {
-  LifeSection.findById(req.params.id)
+// DELETE request for one life section
+router.delete('/lifeSections/:lifeSectionId', requireToken, (req, res, next) => {
+  const lifeSectionId = req.params.lifeSectionId
+
+  LifeSection.findById(lifeSectionId)
     .then(handle404)
     .then(lifeSection => {
       requireOwnership(req, lifeSection)
