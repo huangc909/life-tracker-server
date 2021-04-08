@@ -13,7 +13,8 @@ const router = express.Router()
 
 // GET request for all life sections
 router.get('/lifeSections', requireToken, (req, res, next) => {
-  LifeSection.find()
+  LifeSection.find({'owner': req.user.id})
+    .populate('lifeSections')
     .then(lifeSections => {
       return lifeSections.map(lifeSection => lifeSection.toObject())
     })
