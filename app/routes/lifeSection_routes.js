@@ -31,6 +31,18 @@ router.get('/lifeSections/:lifeSectionId', requireToken, (req, res, next) => {
     .catch(next)
 })
 
+// Default POST request for new life section
+router.post('/defaultLifeSections', requireToken, (req, res, next) => {
+  req.body.lifeSection.owner = req.user.id
+  const lifeSectionData = req.body.lifeSection
+
+  LifeSection.create(lifeSectionData)
+    .then(lifeSection => {
+      res.status(201).json({ lifeSection: lifeSection.toObject() })
+    })
+    .catch(next)
+})
+
 // POST request for new life section
 router.post('/lifeSections', requireToken, (req, res, next) => {
   req.body.lifeSection.owner = req.user.id
